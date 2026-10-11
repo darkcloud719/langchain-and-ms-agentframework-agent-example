@@ -1,0 +1,144 @@
+{
+    'messages': [
+        HumanMessage(content="What's the weather in Tokyo?", additional_kwargs={}, response_metadata={}, id='c8ff9e80-e49f-4b92-87e9-c9d41c9a8f6c'),
+        AIMessage(
+            content='',
+            additional_kwargs={'parsed': None, 'refusal': None},
+            response_metadata={
+                'token_usage': {
+                    'completion_tokens': 17,
+                    'prompt_tokens': 306,
+                    'total_tokens': 323,
+                    'completion_tokens_details': {
+                        'accepted_prediction_tokens': 0,
+                        'audio_tokens': 0,
+                        'reasoning_tokens': 0,
+                        'rejected_prediction_tokens': 0,
+                        'text_tokens': None
+                    },
+                    'prompt_tokens_details': {'audio_tokens': 0, 'cache_write_tokens': None, 'cached_tokens': 0, 'image_tokens': None, 'text_tokens': None},
+                    'latency_checkpoint': {
+                        'engine_tbt_ms': 6,
+                        'engine_ttft_ms': 75,
+                        'engine_ttlt_ms': 186,
+                        'pre_inference_ms': 135,
+                        'service_tbt_ms': 6,
+                        'service_ttft_ms': 439,
+                        'service_ttlt_ms': 545,
+                        'user_visible_ttft_ms': 304
+                    }
+                },
+                'model_provider': 'openai',
+                'model_name': 'gpt-5.4-2026-03-05',
+                'system_fingerprint': None,
+                'id': 'chatcmpl-EXegED6UlIuUn4M3Brk9HiQumPQvJ',
+                'service_tier': 'default',
+                'prompt_filter_results': [
+                    {
+                        'prompt_index': 0,
+                        'content_filter_results': {
+                            'hate': {'filtered': False, 'severity': 'safe'},
+                            'jailbreak': {'detected': False, 'filtered': False},
+                            'self_harm': {'filtered': False, 'severity': 'safe'},
+                            'sexual': {'filtered': False, 'severity': 'safe'},
+                            'violence': {'filtered': False, 'severity': 'safe'}
+                        }
+                    }
+                ],
+                'finish_reason': 'tool_calls',
+                'logprobs': None,
+                'content_filter_results': {
+                    'hate': {'filtered': False, 'severity': 'safe'},
+                    'protected_material_code': {'detected': False, 'filtered': False},
+                    'protected_material_text': {'detected': False, 'filtered': False},
+                    'self_harm': {'filtered': False, 'severity': 'safe'},
+                    'sexual': {'filtered': False, 'severity': 'safe'},
+                    'violence': {'filtered': False, 'severity': 'safe'}
+                }
+            },
+            id='lc_run--01a1290a-542a-7f42-bd57-bda7b9e546b4-0',
+            tool_calls=[{'name': 'get_weather', 'args': {'city': 'Tokyo'}, 'id': 'call_R0xjSAa7O9QlzL5JYbOtv0DT', 'type': 'tool_call'}],
+            invalid_tool_calls=[],
+            usage_metadata={
+                'input_tokens': 306,
+                'output_tokens': 17,
+                'total_tokens': 323,
+                'input_token_details': {'audio': 0, 'cache_read': 0},
+                'output_token_details': {'audio': 0, 'reasoning': 0}
+            }
+        ),
+        ToolMessage(
+            content='{"city":"Tokyo","condition":"Cloudy","temperature_c":15}',
+            name='get_weather',
+            id='16b9de55-682a-4c55-8d6f-e3ff236d2db5',
+            tool_call_id='call_R0xjSAa7O9QlzL5JYbOtv0DT'
+        ),
+        AIMessage(
+            content='{"city":"Tokyo","condition":"Cloudy","temperature_c":15}',
+            additional_kwargs={'parsed': None, 'refusal': None},
+            response_metadata={
+                'token_usage': {
+                    'completion_tokens': 22,
+                    'prompt_tokens': 349,
+                    'total_tokens': 371,
+                    'completion_tokens_details': {
+                        'accepted_prediction_tokens': 0,
+                        'audio_tokens': 0,
+                        'reasoning_tokens': 0,
+                        'rejected_prediction_tokens': 0,
+                        'text_tokens': None
+                    },
+                    'prompt_tokens_details': {'audio_tokens': 0, 'cache_write_tokens': None, 'cached_tokens': 0, 'image_tokens': None, 'text_tokens': None},
+                    'latency_checkpoint': {
+                        'engine_tbt_ms': 8,
+                        'engine_ttft_ms': 85,
+                        'engine_ttlt_ms': 273,
+                        'pre_inference_ms': 117,
+                        'service_tbt_ms': 8,
+                        'service_ttft_ms': 372,
+                        'service_ttlt_ms': 554,
+                        'user_visible_ttft_ms': 255
+                    }
+                },
+                'model_provider': 'openai',
+                'model_name': 'gpt-5.4-2026-03-05',
+                'system_fingerprint': None,
+                'id': 'chatcmpl-EXegFFYUm5BMmSUP5E4sn0C1kaONB',
+                'service_tier': 'default',
+                'prompt_filter_results': [
+                    {
+                        'prompt_index': 0,
+                        'content_filter_results': {
+                            'hate': {'filtered': False, 'severity': 'safe'},
+                            'jailbreak': {'detected': False, 'filtered': False},
+                            'self_harm': {'filtered': False, 'severity': 'safe'},
+                            'sexual': {'filtered': False, 'severity': 'safe'},
+                            'violence': {'filtered': False, 'severity': 'safe'}
+                        }
+                    }
+                ],
+                'finish_reason': 'stop',
+                'logprobs': None,
+                'content_filter_results': {
+                    'hate': {'filtered': False, 'severity': 'safe'},
+                    'protected_material_code': {'detected': False, 'filtered': False},
+                    'protected_material_text': {'detected': False, 'filtered': False},
+                    'self_harm': {'filtered': False, 'severity': 'safe'},
+                    'sexual': {'filtered': False, 'severity': 'safe'},
+                    'violence': {'filtered': False, 'severity': 'safe'}
+                }
+            },
+            id='lc_run--01a1290a-5b2c-7a22-bdf2-395325558023-0',
+            tool_calls=[],
+            invalid_tool_calls=[],
+            usage_metadata={
+                'input_tokens': 349,
+                'output_tokens': 22,
+                'total_tokens': 371,
+                'input_token_details': {'audio': 0, 'cache_read': 0},
+                'output_token_details': {'audio': 0, 'reasoning': 0}
+            }
+        )
+    ],
+    'structured_response': WeatherOutput(city='Tokyo', condition='Cloudy', temperature_c=15)
+}

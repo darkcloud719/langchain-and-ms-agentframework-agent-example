@@ -1,0 +1,246 @@
+{
+    'messages': [
+        HumanMessage(
+            content='I plan to visit Tokyo for 5 days. Please check the weather, calculate the budget with a hotel cost of 3,000 TWD per night and daily 
+expenses of 1,500 TWD, and convert the total budget into JPY.',
+            additional_kwargs={},
+            response_metadata={},
+            id='9a69ea0b-9a35-44dd-821f-1d4918f212b6'
+        ),
+        AIMessage(
+            content='',
+            additional_kwargs={'refusal': None},
+            response_metadata={
+                'token_usage': {
+                    'completion_tokens': 63,
+                    'prompt_tokens': 337,
+                    'total_tokens': 400,
+                    'completion_tokens_details': {
+                        'accepted_prediction_tokens': 0,
+                        'audio_tokens': 0,
+                        'reasoning_tokens': 0,
+                        'rejected_prediction_tokens': 0,
+                        'text_tokens': None
+                    },
+                    'prompt_tokens_details': {'audio_tokens': 0, 'cache_write_tokens': None, 'cached_tokens': 0, 'image_tokens': None, 'text_tokens': None},
+                    'latency_checkpoint': {
+                        'engine_tbt_ms': 5,
+                        'engine_ttft_ms': 67,
+                        'engine_ttlt_ms': 409,
+                        'pre_inference_ms': 94,
+                        'service_tbt_ms': 5,
+                        'service_ttft_ms': 336,
+                        'service_ttlt_ms': 672,
+                        'user_visible_ttft_ms': 242
+                    }
+                },
+                'model_provider': 'openai',
+                'model_name': 'gpt-5.4-2026-03-05',
+                'system_fingerprint': None,
+                'id': 'chatcmpl-EXQqHgizq71w8sh5WoITTnJizaF4J',
+                'service_tier': 'default',
+                'prompt_filter_results': [
+                    {
+                        'prompt_index': 0,
+                        'content_filter_results': {
+                            'hate': {'filtered': False, 'severity': 'safe'},
+                            'jailbreak': {'detected': False, 'filtered': False},
+                            'self_harm': {'filtered': False, 'severity': 'safe'},
+                            'sexual': {'filtered': False, 'severity': 'safe'},
+                            'violence': {'filtered': False, 'severity': 'safe'}
+                        }
+                    }
+                ],
+                'finish_reason': 'tool_calls',
+                'logprobs': None,
+                'content_filter_results': {
+                    'hate': {'filtered': False, 'severity': 'safe'},
+                    'protected_material_code': {'detected': False, 'filtered': False},
+                    'protected_material_text': {'detected': False, 'filtered': False},
+                    'self_harm': {'filtered': False, 'severity': 'safe'},
+                    'sexual': {'filtered': False, 'severity': 'safe'},
+                    'violence': {'filtered': False, 'severity': 'safe'}
+                }
+            },
+            id='lc_run--01a125de-a9b3-7081-8262-d5809b71522f-0',
+            tool_calls=[
+                {'name': 'get_weather', 'args': {'city': 'Tokyo'}, 'id': 'call_Aq2c0fvlUYzbe82m5Y6BXN1v', 'type': 'tool_call'},
+                {
+                    'name': 'calculate_trip_budget',
+                    'args': {'days': 5, 'hotel_per_night': 3000, 'daily_expense': 1500},
+                    'id': 'call_yA5KqHcjlObQNYwNcIpM5KfH',
+                    'type': 'tool_call'
+                }
+            ],
+            invalid_tool_calls=[],
+            usage_metadata={
+                'input_tokens': 337,
+                'output_tokens': 63,
+                'total_tokens': 400,
+                'input_token_details': {'audio': 0, 'cache_read': 0},
+                'output_token_details': {'audio': 0, 'reasoning': 0}
+            }
+        ),
+        ToolMessage(
+            content='{"condition": "Cloudy", "temperature": "15°C"}',
+            name='get_weather',
+            id='4b17bedd-ba6b-4c98-ac91-8e9bc9c15a08',
+            tool_call_id='call_Aq2c0fvlUYzbe82m5Y6BXN1v'
+        ),
+        ToolMessage(
+            content='{"days": 5, "hotel_cost_twd": 15000, "daily_expense_twd": 7500, "total_cost_twd": 22500}',
+            name='calculate_trip_budget',
+            id='fbbb24af-c3d8-43de-a530-e9865aabfdd7',
+            tool_call_id='call_yA5KqHcjlObQNYwNcIpM5KfH'
+        ),
+        AIMessage(
+            content='',
+            additional_kwargs={'refusal': None},
+            response_metadata={
+                'token_usage': {
+                    'completion_tokens': 29,
+                    'prompt_tokens': 465,
+                    'total_tokens': 494,
+                    'completion_tokens_details': {
+                        'accepted_prediction_tokens': 0,
+                        'audio_tokens': 0,
+                        'reasoning_tokens': 0,
+                        'rejected_prediction_tokens': 0,
+                        'text_tokens': None
+                    },
+                    'prompt_tokens_details': {'audio_tokens': 0, 'cache_write_tokens': None, 'cached_tokens': 0, 'image_tokens': None, 'text_tokens': None},
+                    'latency_checkpoint': {
+                        'engine_tbt_ms': 5,
+                        'engine_ttft_ms': 81,
+                        'engine_ttlt_ms': 236,
+                        'pre_inference_ms': 91,
+                        'service_tbt_ms': 5,
+                        'service_ttft_ms': 349,
+                        'service_ttlt_ms': 497,
+                        'user_visible_ttft_ms': 259
+                    }
+                },
+                'model_provider': 'openai',
+                'model_name': 'gpt-5.4-2026-03-05',
+                'system_fingerprint': None,
+                'id': 'chatcmpl-EXQqIe5WiYisBKqnsJrB0Z4EJYWSQ',
+                'service_tier': 'default',
+                'prompt_filter_results': [
+                    {
+                        'prompt_index': 0,
+                        'content_filter_results': {
+                            'hate': {'filtered': False, 'severity': 'safe'},
+                            'jailbreak': {'detected': False, 'filtered': False},
+                            'self_harm': {'filtered': False, 'severity': 'safe'},
+                            'sexual': {'filtered': False, 'severity': 'safe'},
+                            'violence': {'filtered': False, 'severity': 'safe'}
+                        }
+                    }
+                ],
+                'finish_reason': 'tool_calls',
+                'logprobs': None,
+                'content_filter_results': {
+                    'hate': {'filtered': False, 'severity': 'safe'},
+                    'protected_material_code': {'detected': False, 'filtered': False},
+                    'protected_material_text': {'detected': False, 'filtered': False},
+                    'self_harm': {'filtered': False, 'severity': 'safe'},
+                    'sexual': {'filtered': False, 'severity': 'safe'},
+                    'violence': {'filtered': False, 'severity': 'safe'}
+                }
+            },
+            id='lc_run--01a125de-b0a2-7be1-a653-8bb2ac5214c4-0',
+            tool_calls=[
+                {
+                    'name': 'convert_currency',
+                    'args': {'amount': 22500, 'from_currency': 'TWD', 'to_currency': 'JPY'},
+                    'id': 'call_mJClmFLrluX5HdfYUCTgNXOI',
+                    'type': 'tool_call'
+                }
+            ],
+            invalid_tool_calls=[],
+            usage_metadata={
+                'input_tokens': 465,
+                'output_tokens': 29,
+                'total_tokens': 494,
+                'input_token_details': {'audio': 0, 'cache_read': 0},
+                'output_token_details': {'audio': 0, 'reasoning': 0}
+            }
+        ),
+        ToolMessage(
+            content='{\n    "amount": 22500.0,\n    "from_currency": "TWD",\n    "to_currency": "JPY",\n    "exchange_rate": 4.8,\n    "converted_amount": 
+108000.0\n}',
+            name='convert_currency',
+            id='a0e09df2-1c54-40d2-95df-0f880ce8d2be',
+            tool_call_id='call_mJClmFLrluX5HdfYUCTgNXOI'
+        ),
+        AIMessage(
+            content='Here’s your Tokyo trip summary:\n\n- Weather in Tokyo: Cloudy, 15°C\n- Budget calculation for 5 days:\n  - Hotel: 3,000 TWD × 5 = 15,000 
+TWD\n  - Daily expenses: 1,500 TWD × 5 = 7,500 TWD\n  - Total: 22,500 TWD\n- Converted total budget:\n  - 22,500 TWD = 108,000 JPY\n\nTool sources:\n- Weather 
+came from `get_weather`\n- Budget calculation came from `calculate_trip_budget`\n- Currency conversion came from `convert_currency`\n\nIf you want, I can also 
+help break this budget into a per-day amount in JPY.',
+            additional_kwargs={'refusal': None},
+            response_metadata={
+                'token_usage': {
+                    'completion_tokens': 155,
+                    'prompt_tokens': 555,
+                    'total_tokens': 710,
+                    'completion_tokens_details': {
+                        'accepted_prediction_tokens': 0,
+                        'audio_tokens': 0,
+                        'reasoning_tokens': 0,
+                        'rejected_prediction_tokens': 0,
+                        'text_tokens': None
+                    },
+                    'prompt_tokens_details': {'audio_tokens': 0, 'cache_write_tokens': None, 'cached_tokens': 0, 'image_tokens': None, 'text_tokens': None},
+                    'latency_checkpoint': {
+                        'engine_tbt_ms': 11,
+                        'engine_ttft_ms': 77,
+                        'engine_ttlt_ms': 1737,
+                        'pre_inference_ms': 183,
+                        'service_tbt_ms': 11,
+                        'service_ttft_ms': 544,
+                        'service_ttlt_ms': 2199,
+                        'user_visible_ttft_ms': 361
+                    }
+                },
+                'model_provider': 'openai',
+                'model_name': 'gpt-5.4-2026-03-05',
+                'system_fingerprint': None,
+                'id': 'chatcmpl-EXQqJBCxrgPzTR2ELB4spoPVt1fnj',
+                'service_tier': 'default',
+                'prompt_filter_results': [
+                    {
+                        'prompt_index': 0,
+                        'content_filter_results': {
+                            'hate': {'filtered': False, 'severity': 'safe'},
+                            'jailbreak': {'detected': False, 'filtered': False},
+                            'self_harm': {'filtered': False, 'severity': 'safe'},
+                            'sexual': {'filtered': False, 'severity': 'safe'},
+                            'violence': {'filtered': False, 'severity': 'safe'}
+                        }
+                    }
+                ],
+                'finish_reason': 'stop',
+                'logprobs': None,
+                'content_filter_results': {
+                    'hate': {'filtered': False, 'severity': 'safe'},
+                    'protected_material_code': {'detected': False, 'filtered': False},
+                    'protected_material_text': {'detected': False, 'filtered': False},
+                    'self_harm': {'filtered': False, 'severity': 'safe'},
+                    'sexual': {'filtered': False, 'severity': 'safe'},
+                    'violence': {'filtered': False, 'severity': 'safe'}
+                }
+            },
+            id='lc_run--01a125de-b541-71a3-a3be-204e673574ee-0',
+            tool_calls=[],
+            invalid_tool_calls=[],
+            usage_metadata={
+                'input_tokens': 555,
+                'output_tokens': 155,
+                'total_tokens': 710,
+                'input_token_details': {'audio': 0, 'cache_read': 0},
+                'output_token_details': {'audio': 0, 'reasoning': 0}
+            }
+        )
+    ]
+}
