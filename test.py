@@ -1,127 +1,120 @@
-import asyncio
-import os
-
-from dotenv import load_dotenv
-from langchain.agents import create_agent
-from langchain.mcp import MCPAdapter
-from langchain_openai import AzureChatOpenAI
+from langchain.tools import tool
+from deepagents import create_deep_agent
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import Command
 
 
-load_dotenv()
+@tool
+def remove_file(path: str) -> str:
+    """Simulate deleting a file."""
+    return f"[SIMULATION] Deleted {path}"
 
 
-async def main():
-
-    # -------------------------
-    # 1. 建立 Azure OpenAI Model
-    # -------------------------
-
-    model = AzureChatOpenAI(
-        azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
-        api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-        azure_deployment=os.environ[
-            "AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"
-        ],
-    )
+@tool
+def fetch_file(path: str) -> str:
+    """Simulate reading a file."""
+    return f"[SIMULATION] Contents of {path}"
 
 
-    # -------------------------
-    # 2. 設定 MCP Server
-    # -------------------------
+@tool
+def notify_email(to: str, subject: str, body: str) -> str:
+    """Simulate sending an email."""
+    return f"[SIMULATION] Sent email to {to}"
 
-    mcp_config = {
-        "mcpServers": {
-            "my_server": {
-                "url": "http://localhost:8000/mcp"
-            }
-        }
+
+checkpointer = MemorySaver()
+
+agent = create_deep_agent(
+    model="openai:gpt-5.5",
+    tools=[remove_file, fetch_file, notify_email],
+    interrupt_on={
+        # 刪除前暫停；允許核准、修改參數或拒絕
+        "remove_file": {
+            "allowed_decisions": ["approve", "edit", "reject"]
+        },
+
+        # 讀取檔案不會改變資料，不需要暫停
+        "fetch_file": False,
+
+        # 寄信前暫停；只允許核准或拒絕
+        "notify_email": {
+            "allowed_decisions": ["approve", "reject"]
+        },
+    },
+    checkpointer=checkpointer,
+)
+
+
+# 暫停與恢復必須使用同一個 thread_id
+config = {
+    "configurable": {
+        "thread_id": "hitl-practice-001"
     }
+}
 
 
-    # -------------------------
-    # 3. 連線 MCP Server
-    # -------------------------
-
-    async with MCPAdapter(mcp_config) as adapter:
-
-        # 取得 MCP Server 提供的所有工具
-        tools = await adapter.list_tools()
-
-        print("Available MCP tools:")
-        for tool in tools:
-            print("-", tool.name)
-
-
-        # -------------------------
-        # 4. 建立 LangChain Agent
-        # -------------------------
-
-        agent = create_agent(
-            model=model,
-            tools=tools,
-            system_prompt="""
-            You are a helpful assistant.
-
-            Use MCP tools whenever they are useful.
-            Clearly explain the result to the user.
-            """
-        )
-
-
-        # -------------------------
-        # 5. 執行 Agent
-        # -------------------------
-
-        result = await agent.ainvoke(
+# 請模型提出需要使用工具的操作
+result = agent.invoke(
+    {
+        "messages": [
             {
-                "messages": [
+                "role": "user",
+                "content": (
+                    "Please delete the file /tmp/old_report.txt. "
+                    "Before sending any email, ask me for approval."
+                ),
+            }
+        ]
+    },
+    config=config,
+)
+
+
+# 顯示是否暫停，以及待審核的工具呼叫
+interrupts = result.get("__interrupt__", [])
+
+if not interrupts:
+    print("Agent did not pause. Check the request and tool call.")
+else:
+    print("Approval required:")
+    print(interrupts)
+
+    decision = input(
+        "\nApprove or reject? (a/r): "
+    ).strip().lower()
+
+    if decision == "a":
+        resume_command = Command(
+            resume={
+                "decisions": [
                     {
-                        "role": "user",
-                        "content": "Use the MCP server to help me."
+                        "type": "approve"
                     }
                 ]
             }
         )
 
+    elif decision == "r":
+        resume_command = Command(
+            resume={
+                "decisions": [
+                    {
+                        "type": "reject",
+                        "message": "The user rejected this action.",
+                    }
+                ]
+            }
+        )
 
-        # -------------------------
-        # 6. 查看完整訊息流程
-        # -------------------------
+    else:
+        raise ValueError("Please enter 'a' to approve or 'r' to reject.")
 
-        for index, message in enumerate(
-            result["messages"],
-            start=1
-        ):
-            print(f"\nMessage {index}")
-            print("Type:", type(message).__name__)
+    # 用相同的 config / thread_id 恢復流程
+    final_result = agent.invoke(
+        resume_command,
+        config=config,
+    )
 
-            if message.content:
-                print("Content:", message.content)
-
-            tool_calls = getattr(
-                message,
-                "tool_calls",
-                None
-            )
-
-            if tool_calls:
-                print("Tool Calls:")
-
-                for tool_call in tool_calls:
-                    print(
-                        "Tool name:",
-                        tool_call["name"]
-                    )
-                    print(
-                        "Arguments:",
-                        tool_call["args"]
-                    )
-
-
-        print("\n===== FINAL ANSWER =====")
-        print(result["messages"][-1].content)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    print("\nMessages after resume:")
+    for message in final_result["messages"]:
+        print(type(message).__name__, ":", message.content)
