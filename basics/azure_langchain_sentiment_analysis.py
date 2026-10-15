@@ -2,7 +2,8 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import JsonOutputParser
+from rich import print as pprint
 
 load_dotenv()
 
@@ -31,12 +32,21 @@ llm = AzureChatOpenAI(
 )
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful assistant. Please translate the following text into English."),
-    ("user", "{question}")
+    ("system", """
+    Analyze the sentence.
+
+    Return JSON with:
+    - sentiment
+    - reason
+    """),
+    (
+        "user",
+        "{text}"
+    )
 ])
 
-chain = prompt | llm | StrOutputParser()
+chain = prompt | llm | JsonOutputParser()
 
-answer = chain.invoke({"question": "經過老伯的家 籃框變得好高"})
+result = chain.invoke({"text": "I really like this product"})
 
-print(answer)
+pprint(result)
