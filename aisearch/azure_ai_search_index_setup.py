@@ -1,4 +1,9 @@
 import os, json, logging, sys, time
+from pathlib import Path
+from datetime import datetime, timezone
+import uuid
+import tiktoken
+from pypdf import PdfReader
 from random import randint
 from pydantic import BaseModel, ValidationError, Field
 from openai import AzureOpenAI, APITimeoutError, APIConnectionError, RateLimitError, InternalServerError
@@ -97,6 +102,13 @@ AZURE_AI_SEARCH_INDEXER_NAME = os.getenv("AZURE_AI_SEARCH_INDEXER_NAME")
 AZURE_AI_SEARCH_DATASOURCE_NAME = os.getenv("AZURE_AI_SEARCH_DATASOURCE_NAME")
 AZURE_AI_SEARCH_SKILLSET_NAME = os.getenv("AZURE_AI_SEARCH_SKILLSET_NAME")
 
+CHUNK_SIZE = 450
+CHUNK_OVERLAP = 150
+TOKEN_ENCODING = "cl100k_base"
+
+enc = tiktoken.get_encoding(TOKEN_ENCODING)
+
+
 required_settings = {
     "AZURE_OPENAI_API_KEY": AZURE_OPENAI_API_KEY,
     "AZURE_OPENAI_API_VERSION": AZURE_OPENAI_API_VERSION,
@@ -173,24 +185,25 @@ def _clear_documents_in_index():
 def _delete_index():
     try:
         with SearchIndexClient(service_endpoint, AzureKeyCredential(key)) as search_index_client:
-            result = search_index_client.delete_index(index_name)
-            logger.info(f"Index `{index_name}` deleted successfully.")
-            pprint(f"[green]Index `{index_name}` deleted successfully[/green]")
+            result = search_index_client.delete_index(index_vector_name)
+            logger.info(f"Index `{index_vector_name}` deleted successfully.")
+            pprint(f"[green]Index `{index_vector_name}` deleted successfully[/green]")
     except Exception as e:
-        logger.error(f"Failed to delete index `{index_name}`: {e}")
-        pprint(f"[red]Failed to delete index `{index_name}`: {e}")
+        logger.error(f"Failed to delete index `{index_vector_name}`: {e}")
+        pprint(f"[red]Failed to delete index `{index_vector_name}`: {e}")
 
 def _create_vector_index():
     try:
         fields = [
             SimpleField(name="id", type=SearchFieldDataType.String, key=True, filterable=True, sortable=True),
             SimpleField(name="filetype", type=SearchFieldDataType.String, filterable=True, sortable=True, facetable=True),
+            SimpleField(name="chunk_id", type=SearchFieldDataType.Int32),
             SimpleField(name="url", type=SearchFieldDataType.String),
             SearchableField(name="timestamp", type=SearchFieldDataType.String, filterable=True, sortable=True),
             SearchableField(name="filename", type=SearchFieldDataType.String, filterable=True, sortable=True),
             SearchableField(name="content", type=SearchFieldDataType.String),
             SearchField(
-                name="content_vector",
+                name="contentVector",
                 type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
                 searchable=True,
                 vector_search_dimensions=1536,
@@ -313,8 +326,140 @@ def _create_indexer():
         logger.error(f"Error creating indexer `{indexer_name}`: {e}")
         pprint(f"[red]Error creating indexer `{indexer_name}`: {e}[/red]")
 
+def _read_pdf(pdf_path: str) -> str:
+    """
+    Read text from a PDF file.
+    """
+
+    pdf_path = Path.cwd() / pdf_path
+
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"PDF not found: {pdf_path}")
+
+    reader = PdfReader(str(pdf_path))
+
+    pages = []
+
+    for page_number, page in enumerate (reader.pages, start=1):
+        text = page.extract_text()
+
+        if not text:
+            continue
+
+        pages.append(text)
+
+    full_text = "\n\n".join(pages)
+
+    if not full_text.strip():
+        raise ValueError(f"No text could be extracted from {pdf_path}. The PDF may be a scanned/image PDF and require OCR")
+
+    logger.info(f"Read PDF `{pdf_path.name}` pages={len(reader.pages)}, characters={len(full_text)}")
+
+    output_filename = Path.cwd() / "output.txt"
+
+    with open(output_filename, "w", encoding="utf-8") as f:
+        f.write(full_text)
+
+    return full_text
+
+def _chunk_document_object_by_tokens(object_dict: dict) -> list[object]:
+    """
+    Chunk text from a document into smaller pieces based on token count.
+    """
+    try:
+        logger.info(f"[Document Chunking] Chunking document object: {object_dict.get('filename', 'unknown_document')}")
+        text = object_dict.get("content", "")
+        tokens = enc.encode(text)
+        chunks_objects = []
+
+        start = 0
+        while start < len(tokens):
+            end = start + CHUNK_SIZE
+            chunk = enc.decode(tokens[start:end])
+            object_chunk = object_dict.copy()
+            object_chunk["content"] = chunk
+            chunks_objects.append(object_chunk)
+            start = end - CHUNK_OVERLAP if end - CHUNK_OVERLAP > start else end
+        return chunks_objects
+    except Exception as e:
+        logger.exception(f"[Document Chunking] Failed to chunk document object `{object_dict.get('filename', 'Unknown_document')}`: {e}")
+        return []
+
+def upload_documents_to_search(documents: List):
+    try:
+        logger.info(f"[Document Upload] Uploading filename `{documents[0].get('filename', '')}`, total documents: {len(documents)} to Azure AI Search Vector Index: `{index_vector_name}`")
+        with SearchClient(service_endpoint, index_vector_name, AzureKeyCredential(key)) as search_client:
+            result = search_client.upload_documents(documents=documents)
+
+            success_count = sum(1 for r in result if r.succeeded)
+            logger.info(f"[Document Upload] Successfully uploaded {success_count}/{len(documents)} documents.")
+    except Exception as e:
+        logger.exception(f"[Document Upload] Failed to upload documents: {e}")
+
+def _process_document_to_search():
+    """
+    Process the document text and perform a search.
+    """
+    try:
+        filename = Path.cwd() / "output.txt"
+        if not filename.exists():
+            raise FileNotFoundError(f"Output file not found: {filename}")
+        with open(filename, "r", encoding="utf-8") as f:
+            document_text = f.read()
+            logger.info(f"[Document Processing] Read document text from `{filename.name}`")
+            print(f"document_text:{document_text}")
+            json_data = {
+                "filetype": filename.suffix.lstrip("."),
+                "timestamp": datetime.now().isoformat(),
+                "filename": filename.name,
+                "content": document_text
+            }
+
+            chunks_objects = _chunk_document_object_by_tokens(json_data)
+
+            logger.info(f"[Document Processing] Created {len(chunks_objects)} chunks from document `{filename.name}`")
+
+            documents = []
+
+            for idx, chunk_object in enumerate(chunks_objects):
+                content = chunk_object.get("content", "")
+
+                if not content:
+                    continue
+
+                embedding = client_embedding.embeddings.create(
+                    model=AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME,
+                    input=content
+                )
+
+                embedding_vector = embedding.data[0].embedding
+
+
+                documents.append({
+                    "id": str(uuid.uuid4()),
+                    "filename": chunk_object.get("filename", ""),
+                    "filetype": chunk_object.get("filetype", ""),
+                    "chunk_id": idx,
+                    "timestamp": datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S"),
+                    "content": content,
+                    "contentVector": embedding_vector
+                })
+
+            if documents:
+
+                logger.info(f"[Document Processing] Uploading filename={documents[0].get('filename', '')} with {len(documents)} chunks.")
+
+                upload_documents_to_search(documents)
+
+    except Exception as e:
+        logger.exception(f"[Document Processing] Failed to process document: {e}")
+
+
 if __name__ == "__main__":
-    _create_vector_index()
+    # _delete_index()
+    # _create_vector_index()
+    # _read_pdf("student_manual.pdf")
+    _process_document_to_search()
 
 
 
