@@ -124,7 +124,7 @@ chain = (
 # Invoke
 # ============================================================
 
-result = chain.invoke({
+result = chain.invoke({ 
     "text": "我是一名軟體工程師"
 })
 

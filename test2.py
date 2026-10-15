@@ -5,10 +5,7 @@ from rich import print as pprint
 
 from langchain_openai import AzureChatOpenAI
 from langchain_core.tools import tool
-from langchain_core.messages import (
-    HumanMessage,
-    ToolMessage
-)
+from langchain.agents import create_agent
 
 
 # ============================================================
@@ -16,7 +13,6 @@ from langchain_core.messages import (
 # ============================================================
 
 load_dotenv()
-
 
 AZURE_OPENAI_API_KEY = os.getenv(
     "AZURE_OPENAI_API_KEY"
@@ -72,7 +68,8 @@ llm = AzureChatOpenAI(
     azure_endpoint=AZURE_OPENAI_ENDPOINT,
     api_key=AZURE_OPENAI_API_KEY,
     api_version=AZURE_OPENAI_API_VERSION,
-    model=AZURE_OPENAI_CHAT_DEPLOYMENT_NAME
+    azure_deployment=AZURE_OPENAI_CHAT_DEPLOYMENT_NAME,
+    temperature=0
 )
 
 
@@ -88,14 +85,14 @@ def get_weather(city: str) -> str:
 
     weather_data = {
         "New York": "Sunny, 25°C",
-        "London": "Cloudy, 18°C",
-        "Chicago": "Windy, 20°C",
-        "Taipei": "Rainy, 22°C"
+        "Los Angeles": "Cloudy, 22°C",
+        "Chicago": "Rainy, 18°C",
+        "San Francisco": "Foggy, 15°C"
     }
 
     return weather_data.get(
         city,
-        "Weather data not available."
+        "Weather data not available for this city."
     )
 
 
@@ -113,7 +110,7 @@ def calculate(
     Perform a basic mathematical calculation.
 
     Supported operations:
-    add, subtract, multiply, divide
+    add, subtract, multiply, divide.
     """
 
     if operation == "add":
@@ -151,7 +148,7 @@ def translate_to_english(
     """
     Translate Mandarin Chinese text into English.
 
-    This demo returns a predefined translation
+    This demo returns predefined translations
     for educational purposes.
     """
 
@@ -165,7 +162,7 @@ def translate_to_english(
 
     return translation_data.get(
         text,
-        "Translation not found."
+        "Translation not available for this text."
     )
 
 
@@ -180,138 +177,49 @@ tools = [
 ]
 
 
-# Create a lookup table
-tools_by_name = {
-    tool.name: tool
-    for tool in tools
-}
-
-
 # ============================================================
-# Bind Tools to LLM
+# Create Agent
 # ============================================================
 
-llm_with_tools = llm.bind_tools(
-    tools
-)
-
-
-# ============================================================
-# User Question
-# ============================================================
-
-question = (
-    "What is 25 multiplied by 8?"
-)
-
-
-messages = [
-    HumanMessage(
-        content=question
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=(
+        "You are a helpful assistant. "
+        "Use tools when they are useful for answering the user."
     )
-]
-
-
-# ============================================================
-# Step 1 — Let LLM Choose a Tool
-# ============================================================
-
-response = llm_with_tools.invoke(
-    messages
 )
 
 
-print(
-    "\n========== LLM Tool Decision ==========\n"
-)
+# ============================================================
+# Invoke Agent
+# ============================================================
+
+result = agent.invoke({
+    "messages": [
+        {
+            "role": "user",
+            "content": "What is 25 multiplied by 8?"
+        }
+    ]
+})
+
+
+# ============================================================
+# Show Full Agent State
+# ============================================================
 
 pprint(
-    response.tool_calls
-)
-
-
-# Important:
-# The assistant tool-call message must also be
-# added to the conversation history.
-
-messages.append(
-    response
+    result
 )
 
 
 # ============================================================
-# Step 2 — Execute Tools
+# Final Answer
 # ============================================================
 
-if response.tool_calls:
-
-    for tool_call in response.tool_calls:
-
-        tool_name = tool_call["name"]
-
-        tool_args = tool_call["args"]
-
-        tool_call_id = tool_call["id"]
-
-
-        print(
-            f"\nExecuting Tool: {tool_name}"
-        )
-
-        pprint(
-            tool_args
-        )
-
-
-        # Find the actual LangChain Tool
-        selected_tool = tools_by_name[
-            tool_name
-        ]
-
-
-        # ================================================
-        # ACTUAL TOOL EXECUTION
-        # ================================================
-
-        tool_result = selected_tool.invoke(
-            tool_args
-        )
-
-
-        print(
-            "\nTool Result:"
-        )
-
-        pprint(
-            tool_result
-        )
-
-
-        # ================================================
-        # Send Tool Result Back to LLM
-        # ================================================
-
-        messages.append(
-            ToolMessage(
-                content=str(tool_result),
-                tool_call_id=tool_call_id
-            )
-        )
-
-
-# ============================================================
-# Step 3 — Ask LLM for Final Answer
-# ============================================================
-
-final_response = llm_with_tools.invoke(
-    messages
-)
-
+final_message = result["messages"][-1]
 
 print(
-    "\n========== Final Answer ==========\n"
-)
-
-print(
-    final_response.content
+    f"\nFinal Answer: {final_message.content}"
 )
